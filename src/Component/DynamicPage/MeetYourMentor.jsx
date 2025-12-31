@@ -1,0 +1,135 @@
+import React, { useEffect } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Autoplay } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import { FaLinkedin, FaInstagram } from "react-icons/fa";
+import { useMentorStore } from "../../Zustand/GetMentor";
+import { useBatchesStore } from "../../Zustand/GetLiveBatches";
+import { useParams } from "react-router-dom";
+
+const MeetYourMentor = () => {
+  const { courseId } = useParams();
+  const { loading, error, mentorData, fetchMentors } = useMentorStore();
+  const { fetchBatches, batchData } = useBatchesStore();
+
+  // Fetch mentors and batches on mount
+  useEffect(() => {
+    fetchMentors();
+    fetchBatches();
+  }, []);
+
+  // Find the current course
+  const currentCourse = batchData?.find((batch) => batch._id === courseId);
+
+  // Filter mentors for this course based on teachers
+  const mentorsForCourse = mentorData?.filter((mentor) =>
+    currentCourse?.teachers?.some((teacherName) =>
+      teacherName.toLowerCase().includes(mentor.name.toLowerCase())
+    )
+  );
+
+  console.log("Current Course:", currentCourse);
+  console.log("Mentors for this Course:", mentorsForCourse);
+
+  if (!currentCourse) return null; // course not found
+
+  return (
+    <section className="w-full bg-white flex flex-col items-center justify-center">
+      <div className="max-w-full w-full mx-auto flex flex-col items-center justify-center px-6 md:px-10">
+        <h2 className="text-3xl md:text-4xl font-bold text-[var(--primary-color)] mb-12">
+          Meet Your Mentors
+        </h2>
+
+        {/* No mentors */}
+        {mentorsForCourse?.length === 0 && (
+          <p className="text-gray-500 text-center mb-8">
+            No mentors assigned for this course yet.
+          </p>
+        )}
+
+        {/* Mentors Swiper */}
+        {mentorsForCourse?.length > 0 && (
+          <Swiper
+            modules={[Navigation, Autoplay]}
+            navigation={false}
+            autoplay={{ delay: 4000, disableOnInteraction: false }}
+            loop
+            className="w-full"
+          >
+            {mentorsForCourse.map((mentor) => (
+              <SwiperSlide key={mentor._id || mentor.name}>
+                <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-10 md:gap-20 w-full">
+
+                  {/* Left Content */}
+                  <div className="w-full md:w-1/2 flex flex-col items-start text-left md:pl-6">
+                    <h3 className="text-2xl md:text-3xl font-extrabold text-[#111827] uppercase tracking-wide mb-3">
+                      {mentor.name}
+                    </h3>
+                    {mentor.specialization && (
+                      <p className="text-base md:text-lg text-gray-700 font-medium mb-1">
+                        {mentor.specialization}
+                      </p>
+                    )}
+                    {mentor.experience && (
+                      <p className="text-sm md:text-base text-gray-600 mb-5 leading-relaxed">
+                        {mentor.experience}
+                      </p>
+                    )}
+
+                    {/* Social Links */}
+                    <div className="flex items-center gap-4 mt-2">
+                      {mentor.linkedin && (
+                        <a
+                          href={mentor.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[var(--primary-color)] bg-gray-100 p-2 rounded-full hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 text-2xl"
+                        >
+                          <FaLinkedin />
+                        </a>
+                      )}
+                      {mentor.instagram && (
+                        <a
+                          href={mentor.instagram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[var(--primary-color)] bg-gray-100 p-2 rounded-full hover:bg-pink-50 hover:text-pink-600 transition-all duration-300 text-2xl"
+                        >
+                          <FaInstagram />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right Image Section */}
+                  <div className="relative w-full md:w-1/2 flex items-center justify-center">
+                    <div
+                      className="w-full h-72 md:h-96 flex items-center justify-center"
+                      style={{
+                        backgroundImage: "url('/Group.svg')",
+                        backgroundSize: "contain",
+                        backgroundRepeat: "no-repeat",
+                        backgroundPosition: "center",
+                      }}
+                    >
+                      <img
+                        src={mentor?.imageUrl || "https://res.cloudinary.com/dximnweqf/image/upload/v1766047992/WhatsApp_Image_2025-12-18_at_2.21.38_PM_pqgygs.jpg"}
+
+                        // src={mentor.imageUrl || mentor.image}
+                        alt={mentor.name}
+                        className="w-72 rounded-md object-center object-contain"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        )}
+      </div>
+    </section>
+  );
+};
+
+export default MeetYourMentor;
